@@ -1,45 +1,22 @@
-const { spawn } = require('child_process');
 const express = require('express');
 const app = express();
 
-// Environment variables
-const DATAFORSEO_USERNAME = process.env.DATAFORSEO_USERNAME;
-const DATAFORSEO_PASSWORD = process.env.DATAFORSEO_PASSWORD;
-
-// Create HTTP endpoints that wrap the MCP server
 app.use(express.json());
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', service: 'DataforSEO MCP Server' });
+  res.json({ 
+    status: 'ok', 
+    service: 'DataforSEO MCP Server',
+    username: process.env.DATAFORSEO_USERNAME ? 'configured' : 'not configured'
+  });
 });
 
-// MCP HTTP Streamable endpoint
-app.post('/stream', (req, res) => {
-  // Spawn the MCP server process
-  const mcp = spawn('npx', ['dataforseo-mcp-server'], {
-    env: {
-      ...process.env,
-      DATAFORSEO_USERNAME,
-      DATAFORSEO_PASSWORD
-    }
-  });
-
-  // Handle the communication
-  mcp.stdout.on('data', (data) => {
-    res.write(data);
-  });
-
-  req.on('data', (data) => {
-    mcp.stdin.write(data);
-  });
-
-  req.on('end', () => {
-    mcp.stdin.end();
-  });
-
-  mcp.on('close', () => {
-    res.end();
+// Simple test endpoint
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'DataforSEO MCP Server is running!',
+    port: process.env.PORT || 3000
   });
 });
 
